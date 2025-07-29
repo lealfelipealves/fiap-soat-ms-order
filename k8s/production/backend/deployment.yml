@@ -1,27 +1,30 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: fastfood-app
+  name: ms-order
 spec:
-  replicas: 2
+  replicas: 1
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: fastfood-app
+      app: ms-order
   template:
     metadata:
       labels:
-        app: fastfood-app
+        app: ms-order
     spec:
+      restartPolicy: Always
       containers:
-        - name: fastfood-app
-          image: lealfelipealves/fastfood-app:latest
+        - name: backend
+          image: lealfelipealves/fiap-soat-ms-order:latest
           ports:
             - containerPort: 3333
+              protocol: TCP
           envFrom:
             - configMapRef:
-                name: app-config
+                name: ms-order-config
             - secretRef:
-                name: app-secrets
+                name: ms-order-secret
           resources:
             requests:
               cpu: 50m

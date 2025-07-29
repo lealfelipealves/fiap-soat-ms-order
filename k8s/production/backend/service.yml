@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: fastfood-service
+  name: ms-order-svc
 spec:
   type: LoadBalancer
   selector:
-    app: fastfood-app
+    app: ms-order
   ports:
     - protocol: TCP
       port: 80
