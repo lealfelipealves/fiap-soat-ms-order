@@ -5,7 +5,7 @@
 <p align="center">Software Architecture Tech Challenge - Fase 4</p>
 <p align="center">Grupo 18 - Felipe Alves Leal</p>
 
-# Microserviço
+# Microserviço Pedido
 
 Responsável por operacionalizar o processo de pedidos, registrando os pedidos, retornando as informações necessárias para montar um pedido, listando os pedidos registrados e em processo de produção (visão de cliente). 
 
