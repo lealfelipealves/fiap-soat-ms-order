@@ -84,7 +84,7 @@ Para acessar a documentação do swagger
 http://localhost:3333/docs
 ```
 
-![image](https://github.com/user-attachments/assets/2186718b-0ab3-4af1-8267-1514fe908153)
+<img width="1853" height="970" alt="image" src="https://github.com/user-attachments/assets/22e4f709-2c43-4eeb-a280-5a84a0352ac1" />
 
 ## ▶️ Executar o projeto
 
