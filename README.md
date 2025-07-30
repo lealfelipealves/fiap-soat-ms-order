@@ -31,6 +31,19 @@ Este projeto é parte do **Software Architecture Tech Challenge - Fase 4**. Ele 
 - [Prisma ORM](https://www.prisma.io/docs/orm)
 - [Docker Documentation](https://docs.docker.com/)
 
+## 📖 Swagger
+
+Para acessar a documentação do swagger
+
+<a href="http://localhost:3333/docs" target="_blank">Link para acessar o swagger localmente</a>
+
+```bash
+http://localhost:3333/docs
+```
+
+<img width="1853" height="970" alt="image" src="https://github.com/user-attachments/assets/22e4f709-2c43-4eeb-a280-5a84a0352ac1" />
+
+
 ## 🎥 Demo
 
 [![Video demonstração](https://img.youtube.com/vi/tynOvtxLzq0/0.jpg)](https://www.youtube.com/watch?v=tynOvtxLzq0)
@@ -74,17 +87,6 @@ npm install;
 npx prisma db seed;
 ```
 
-## 📖 Swagger
-
-Para acessar a documentação do swagger
-
-<a href="http://localhost:3333/docs" target="_blank">Link para acessar o swagger localmente</a>
-
-```bash
-http://localhost:3333/docs
-```
-
-<img width="1853" height="970" alt="image" src="https://github.com/user-attachments/assets/22e4f709-2c43-4eeb-a280-5a84a0352ac1" />
 
 ## ▶️ Executar o projeto
 
