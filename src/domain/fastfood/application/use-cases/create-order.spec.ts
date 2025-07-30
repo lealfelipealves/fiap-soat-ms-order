@@ -1,59 +1,223 @@
-import { UniqueEntityID } from '@/core/entities/unique-entity-id'
+import { ResourceNotFoundError } from '@/core/errors/errors/resource-not-found-error'
+import { MicroserviceCommunicationService } from '@/infra/http/services/microservice-communication.service'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CreateOrderUseCase } from './create-order'
-import { InMemoryProductsRepository } from 'test/repositories/in-memory-products-repository'
-import { InMemoryOrdersRepository } from 'test/repositories/in-memory-orders-repository'
-import { InMemoryOrderProductsRepository } from 'test/repositories/in-memory-order-products-repository'
-
-let inMemoryOrdersRepository: InMemoryOrdersRepository
-let inMemoryProductsRepository: InMemoryProductsRepository
-let inMemoryOrderProductsRepository: InMemoryOrderProductsRepository
-let sut: CreateOrderUseCase
 
 describe('Create Order', () => {
+  let sut: CreateOrderUseCase
+  let mockOrderRepository: any
+  let microserviceCommunication: MicroserviceCommunicationService
+
   beforeEach(() => {
-    inMemoryOrderProductsRepository = new InMemoryOrderProductsRepository()
-    inMemoryProductsRepository = new InMemoryProductsRepository()
-    inMemoryOrdersRepository = new InMemoryOrdersRepository(
-      inMemoryOrderProductsRepository,
-      inMemoryProductsRepository
-    )
-    sut = new CreateOrderUseCase(inMemoryOrdersRepository)
+    mockOrderRepository = {
+      create: vi.fn()
+    }
+
+    microserviceCommunication = {
+      getCustomerByCpf: vi.fn(),
+      getProductById: vi.fn(),
+      notifyPaymentService: vi.fn(),
+      updateOrderStatus: vi.fn()
+    } as any
+
+    sut = new CreateOrderUseCase(mockOrderRepository, microserviceCommunication)
   })
 
-  it('should be able to create a order', async () => {
+  it('should be able to create an order', async () => {
+    const mockCustomer = {
+      id: 'customer-1',
+      name: 'John Doe',
+      email: 'john@example.com',
+      cpf: '12345678901'
+    }
+
+    const mockProduct = {
+      id: 'product-1',
+      name: 'X-Burger',
+      description: 'Delicious burger',
+      price: 15.99,
+      category: 'Lanche'
+    }
+
+    vi.mocked(microserviceCommunication.getCustomerByCpf).mockResolvedValue(
+      mockCustomer
+    )
+    vi.mocked(microserviceCommunication.getProductById).mockResolvedValue(
+      mockProduct
+    )
+
     const result = await sut.execute({
-      customerId: '123456',
-      productIds: ['1', '2']
+      customerId: '12345678901',
+      productIds: ['product-1']
     })
 
     expect(result.isRight()).toBe(true)
-    expect(inMemoryOrdersRepository.items[0]).toEqual(result.value?.order)
-    expect(
-      inMemoryOrdersRepository.items[0].products.currentItems
-    ).toHaveLength(2)
-    expect(inMemoryOrdersRepository.items[0].products.currentItems).toEqual([
-      expect.objectContaining({ productId: new UniqueEntityID('1') }),
-      expect.objectContaining({ productId: new UniqueEntityID('2') })
-    ])
+    if (result.isRight()) {
+      expect(result.value.order).toBeTruthy()
+      expect(result.value.order.customerId.toString()).toBe('12345678901')
+    }
   })
 
-  it('should persist products when creating a new order', async () => {
+  it('should be able to create an order with multiple products', async () => {
+    const mockCustomer = {
+      id: 'customer-1',
+      name: 'John Doe',
+      email: 'john@example.com',
+      cpf: '12345678901'
+    }
+
+    const mockProduct1 = {
+      id: 'product-1',
+      name: 'X-Burger',
+      description: 'Delicious burger',
+      price: 15.99,
+      category: 'Lanche'
+    }
+
+    const mockProduct2 = {
+      id: 'product-2',
+      name: 'Fries',
+      description: 'Delicious fries',
+      price: 8.99,
+      category: 'Acompanhamento'
+    }
+
+    vi.mocked(microserviceCommunication.getCustomerByCpf).mockResolvedValue(
+      mockCustomer
+    )
+    vi.mocked(microserviceCommunication.getProductById)
+      .mockResolvedValueOnce(mockProduct1)
+      .mockResolvedValueOnce(mockProduct2)
+
     const result = await sut.execute({
-      customerId: '123456',
-      productIds: ['1', '2']
+      customerId: '12345678901',
+      productIds: ['product-1', 'product-2']
     })
 
     expect(result.isRight()).toBe(true)
-    expect(inMemoryOrderProductsRepository.items).toHaveLength(2)
-    expect(inMemoryOrderProductsRepository.items).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          productId: new UniqueEntityID('1')
-        }),
-        expect.objectContaining({
-          productId: new UniqueEntityID('1')
-        })
-      ])
+    if (result.isRight()) {
+      expect(result.value.order).toBeTruthy()
+      expect(result.value.order.products.getItems()).toHaveLength(2)
+    }
+  })
+
+  it('should return error when customer is not found', async () => {
+    vi.mocked(microserviceCommunication.getCustomerByCpf).mockRejectedValue(
+      new Error('Customer not found')
     )
+
+    const result = await sut.execute({
+      customerId: 'invalid-cpf',
+      productIds: ['product-1']
+    })
+
+    expect(result.isLeft()).toBe(true)
+    if (result.isLeft()) {
+      expect(result.value).toBeInstanceOf(ResourceNotFoundError)
+    }
+  })
+
+  it('should return error when product is not found', async () => {
+    const mockCustomer = {
+      id: 'customer-1',
+      name: 'John Doe',
+      email: 'john@example.com',
+      cpf: '12345678901'
+    }
+
+    vi.mocked(microserviceCommunication.getCustomerByCpf).mockResolvedValue(
+      mockCustomer
+    )
+    vi.mocked(microserviceCommunication.getProductById).mockRejectedValue(
+      new Error('Product not found')
+    )
+
+    const result = await sut.execute({
+      customerId: '12345678901',
+      productIds: ['invalid-product']
+    })
+
+    expect(result.isLeft()).toBe(true)
+    if (result.isLeft()) {
+      expect(result.value).toBeInstanceOf(ResourceNotFoundError)
+    }
+  })
+
+  it('should validate customer before creating order', async () => {
+    const mockCustomer = {
+      id: 'customer-1',
+      name: 'John Doe',
+      email: 'john@example.com',
+      cpf: '12345678901'
+    }
+
+    const mockProduct = {
+      id: 'product-1',
+      name: 'X-Burger',
+      description: 'Delicious burger',
+      price: 15.99,
+      category: 'Lanche'
+    }
+
+    vi.mocked(microserviceCommunication.getCustomerByCpf).mockResolvedValue(
+      mockCustomer
+    )
+    vi.mocked(microserviceCommunication.getProductById).mockResolvedValue(
+      mockProduct
+    )
+
+    await sut.execute({
+      customerId: '12345678901',
+      productIds: ['product-1']
+    })
+
+    expect(microserviceCommunication.getCustomerByCpf).toHaveBeenCalledWith(
+      '12345678901'
+    )
+  })
+
+  it('should validate all products before creating order', async () => {
+    const mockCustomer = {
+      id: 'customer-1',
+      name: 'John Doe',
+      email: 'john@example.com',
+      cpf: '12345678901'
+    }
+
+    const mockProduct1 = {
+      id: 'product-1',
+      name: 'X-Burger',
+      description: 'Delicious burger',
+      price: 15.99,
+      category: 'Lanche'
+    }
+
+    const mockProduct2 = {
+      id: 'product-2',
+      name: 'Fries',
+      description: 'Delicious fries',
+      price: 8.99,
+      category: 'Acompanhamento'
+    }
+
+    vi.mocked(microserviceCommunication.getCustomerByCpf).mockResolvedValue(
+      mockCustomer
+    )
+    vi.mocked(microserviceCommunication.getProductById)
+      .mockResolvedValueOnce(mockProduct1)
+      .mockResolvedValueOnce(mockProduct2)
+
+    await sut.execute({
+      customerId: '12345678901',
+      productIds: ['product-1', 'product-2']
+    })
+
+    expect(microserviceCommunication.getProductById).toHaveBeenCalledWith(
+      'product-1'
+    )
+    expect(microserviceCommunication.getProductById).toHaveBeenCalledWith(
+      'product-2'
+    )
+    expect(microserviceCommunication.getProductById).toHaveBeenCalledTimes(2)
   })
 })

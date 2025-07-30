@@ -1,7 +1,7 @@
-import { Controller, Get } from '@nestjs/common'
-import { ApiOperation, ApiTags } from '@nestjs/swagger'
 import { ResourceNotFoundError } from '@/core/errors/errors/resource-not-found-error'
 import { GetAllOrderUseCase } from '@/domain/fastfood/application/use-cases/get-all-order'
+import { Controller, Get } from '@nestjs/common'
+import { ApiOperation, ApiTags } from '@nestjs/swagger'
 import { OrderPresenter } from '../presenters/order-presenter'
 
 @ApiTags('Pedidos')
